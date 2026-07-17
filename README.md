@@ -1,9 +1,14 @@
 # 🌱 The Archipel — Sovereign Personal CRM
 
-[![Mnemosyne OS Cartridge](https://img.shields.io/badge/Mnemosyne%20OS-Cartridge-0ea5e9?style=for-the-badge)](https://github.com/yaka0007/Mnemosyne-OS)
+[![Mnemosyne OS Cartridge](https://img.shields.io/badge/Mnemosyne%20OS-Cartridge-0ea5e9?style=for-the-badge)](https://github.com/yaka0007/Mnemosyne-Neural-OS)
 [![License: EULA](https://img.shields.io/badge/License-Mnemosyne%20OS%20Cartridge%20EULA-10b981?style=for-the-badge)](./LICENSE.md)
 
 Welcome to **The Archipel**, the default Sovereign Personal CRM cartridge for **Mnemosyne OS**. Designed with an offline-first, local-first philosophy, it helps you map, nurture, and explore your social networks without third-party servers.
+
+> [!IMPORTANT]
+> **The Archipel is a cartridge — it runs inside Mnemosyne OS.** Install the host app first, then load this cartridge from MnemoHub (or link it in dev mode).
+>
+> [![Download latest release](https://img.shields.io/badge/⬇%20Download-Mnemosyne%20OS%20latest-0ea5e9?style=for-the-badge)](https://github.com/yaka0007/Mnemosyne-Neural-OS/releases/latest) &nbsp; [![Mnemosyne OS repository](https://img.shields.io/badge/GitHub-Mnemosyne%20OS-181717?style=for-the-badge&logo=github)](https://github.com/yaka0007/Mnemosyne-Neural-OS)
 
 ![The Archipel Dashboard](./docs/images/dashboard.png)
 
