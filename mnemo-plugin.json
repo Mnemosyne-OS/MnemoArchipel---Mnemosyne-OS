@@ -1,0 +1,22 @@
+{
+  "name": "@mnemosyne-plugins/mnemo-archipel",
+  "displayName": "L'Archipel CRM",
+  "version": "0.5.0",
+  "category": "Productivity",
+  "description": "Un CRM personnel organique et sobre conçu pour le TDAH, luttant contre l'oubli des relations par la résonance cognitive.",
+  "permissions": ["vault:read", "vault:write", "model:infer"],
+  "updateStrategy": "git",
+  "entrypoints": {
+    "renderer": "index.html"
+  },
+  "widgets": [
+    {
+      "id": "archipel-main",
+      "name": "L'Archipel",
+      "route": "index.html",
+      "defaultWidth": 1000,
+      "defaultHeight": 750,
+      "icon": "🏝️"
+    }
+  ]
+}
