@@ -43,6 +43,42 @@ Welcome to **The Archipel**, the default Sovereign Personal CRM cartridge for **
 
 ---
 
+## 🧠 Connected to the Mnemosyne OS Core
+
+The Archipel is not a standalone app with a chatbot bolted on — it's a **cartridge that plugs straight into the Mnemosyne OS intelligence engine**. The split is deliberate:
+
+- **The Archipel owns the data.** Your contacts, relationships, facts and moods — the sovereign management of *your* social graph. It lives locally and is never sent to a third-party server.
+- **Mnemosyne OS owns the intelligence.** The moment the cartridge loads, every contact is ingested as a vectorized *chronicle* into a **walled app-sandbox vault** — isolated from the rest of your memory until you decide otherwise. From there the core engine brings that data to life:
+  - **Semantic search (RAG)** — ask *"Who loves modular synths?"* in plain language and get grounded answers, not keyword matches.
+  - **Local-first LLM distillation** — dump a raw note about a meeting and the engine extracts the person, the facts and the mood, then updates the profile.
+  - **Embeddings** — 768-dimensional vectors let your relationships be reasoned over by *meaning*.
+
+The intelligence comes **to** the data; the data never leaves your machine (an optional cloud model kicks in only when you choose it).
+
+```mermaid
+flowchart LR
+    subgraph ARCHIPEL["🌱 The Archipel — this cartridge"]
+        DATA["Your contacts<br/>relationships · facts · moods"]
+    end
+
+    subgraph CORE["🧠 Mnemosyne OS Core — the intelligence engine"]
+        VAULT[("App-Sandbox Vault<br/>walled · local-first")]
+        EMB["Embeddings<br/>768-D vectors"]
+        RAG["RAG retrieval"]
+        LLM["LLM inference<br/>local-first / cloud"]
+    end
+
+    DATA -->|"each contact becomes a chronicle · via SDK"| VAULT
+    VAULT --> EMB --> RAG
+    RAG -->|"natural-language search"| DATA
+    LLM -->|"brain-dump → structured facts"| DATA
+    RAG -.->|grounds| LLM
+```
+
+> Your data stays in the walled vault on your own machine — the core simply brings the intelligence to it. Nothing is sent to a third-party server.
+
+---
+
 ## 🚀 Installation & Running
 
 To run the cartridge in sandbox/development mode:
