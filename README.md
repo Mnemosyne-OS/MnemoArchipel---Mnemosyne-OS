@@ -57,22 +57,32 @@ The intelligence comes **to** the data; the data never leaves your machine (an o
 
 ```mermaid
 flowchart LR
-    subgraph ARCHIPEL["🌱 The Archipel — this cartridge"]
-        DATA["Your contacts<br/>relationships · facts · moods"]
+    subgraph ARCHIPEL["🌱 The Archipel · your sovereign data"]
+        DATA["👥 Your contacts<br/>relationships · facts · moods"]
     end
 
-    subgraph CORE["🧠 Mnemosyne OS Core — the intelligence engine"]
-        VAULT[("App-Sandbox Vault<br/>walled · local-first")]
-        EMB["Embeddings<br/>768-D vectors"]
-        RAG["RAG retrieval"]
-        LLM["LLM inference<br/>local-first / cloud"]
+    subgraph CORE["🧠 Mnemosyne OS Core · the intelligence engine"]
+        VAULT[("🔒 App-Sandbox Vault<br/>walled · local-first")]
+        EMB["🧮 Embeddings<br/>768-D vectors"]
+        RAG["🔍 RAG retrieval"]
+        LLM["✨ LLM inference<br/>local-first / cloud"]
     end
 
-    DATA -->|"each contact becomes a chronicle · via SDK"| VAULT
-    VAULT --> EMB --> RAG
+    DATA ==>|"each contact → a chronicle"| VAULT
+    VAULT ==> EMB ==> RAG
     RAG -->|"natural-language search"| DATA
     LLM -->|"brain-dump → structured facts"| DATA
     RAG -.->|grounds| LLM
+
+    classDef dataNode fill:#043d33,stroke:#10b981,stroke-width:2px,color:#d1fae5
+    classDef vaultNode fill:#2e1065,stroke:#a78bfa,stroke-width:2px,color:#ede9fe
+    classDef coreNode fill:#241a52,stroke:#8b5cf6,stroke-width:1.5px,color:#e9d5ff
+    class DATA dataNode
+    class VAULT vaultNode
+    class EMB,RAG,LLM coreNode
+
+    style ARCHIPEL fill:#022c22,stroke:#10b981,stroke-width:2px,color:#6ee7b7
+    style CORE fill:#1a1340,stroke:#8b5cf6,stroke-width:2px,color:#c4b5fd
 ```
 
 > Your data stays in the walled vault on your own machine — the core simply brings the intelligence to it. Nothing is sent to a third-party server.
