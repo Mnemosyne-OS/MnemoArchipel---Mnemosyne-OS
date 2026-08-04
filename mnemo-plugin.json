@@ -1,7 +1,7 @@
 {
   "name": "@mnemosyne-plugins/mnemo-archipel",
   "displayName": "L'Archipel CRM",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "category": "Productivity",
   "icon": "icon.svg",
   "description": "Un CRM personnel organique et sobre conçu pour le TDAH, luttant contre l'oubli des relations par la résonance cognitive.",
@@ -10,7 +10,7 @@
     "en": "An organic, understated personal CRM designed for ADHD, fighting the forgetting of relationships through cognitive resonance.",
     "es": "Un CRM personal orgánico y sobrio diseñado para el TDAH, que combate el olvido de las relaciones mediante la resonancia cognitiva."
   },
-  "repository": "https://github.com/yaka0007/MnemoArchipel---Mnemosyne-OS",
+  "repository": "https://github.com/Mnemosyne-OS/MnemoArchipel---Mnemosyne-OS",
   "permissions": [
     "vault:read",
     "vault:write",
