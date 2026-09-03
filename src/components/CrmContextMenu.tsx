@@ -25,10 +25,19 @@ export const CrmContextMenu: React.FC<CrmContextMenuProps> = ({
   onAddContactClick,
   t
 }) => {
+  // Closing on an outside click, and on this cartridge losing focus.
+  //
+  // 🪤 A press on the HOST plane never reaches this document: we run in an
+  // iframe, so that event belongs to the host page. No event type fixes that
+  // (pointerdown included) — only the window blur crosses the boundary.
   React.useEffect(() => {
     const handleOutsideClick = () => onClose();
     document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
+    window.addEventListener('blur', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      window.removeEventListener('blur', handleOutsideClick);
+    };
   }, [onClose]);
 
   return (

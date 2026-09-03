@@ -95,11 +95,22 @@ export function useCrmState() {
     }
   }, []);
 
-  // Click outside context menu closer
+  // Close the context menu on an outside click, or when this cartridge
+  // loses focus.
+  //
+  // 🪤 A press on the HOST plane never reaches this document at all: we run
+  // in an iframe, so that event belongs to the host page, not to us. No event
+  // type fixes that (pointerdown included) — the only signal that crosses the
+  // boundary is this window losing focus, which is exactly what the host shell
+  // already does for its own menus.
   useEffect(() => {
     const closeMenu = () => setContextMenu(prev => prev.visible ? { ...prev, visible: false } : prev);
     window.addEventListener('click', closeMenu);
-    return () => window.removeEventListener('click', closeMenu);
+    window.addEventListener('blur', closeMenu);
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('blur', closeMenu);
+    };
   }, []);
 
   const persistContacts = (updated: Contact[]) => {

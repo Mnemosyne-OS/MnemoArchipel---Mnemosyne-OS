@@ -1,12 +1,8 @@
 {
   "name": "@mnemosyne-plugins/mnemo-archipel",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yaka0007/MnemoArchipel---Mnemosyne-OS.git"
-  },
   "scripts": {
     "dev": "vite",
     "dev:cartridge": "vite",
@@ -26,5 +22,9 @@
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
     "vitest": "^1.6.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mnemosyne-OS/MnemoArchipel---Mnemosyne-OS"
   }
 }
