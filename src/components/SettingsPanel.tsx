@@ -2,18 +2,28 @@ import { useState } from 'react';
 import { CustomCategory, CustomWidgetDef, CustomWidgetField } from '../types';
 import { styles } from '../styles';
 import { CustomCategoriesSettings } from './CustomCategoriesSettings';
+import type { MirrorStatus } from '../utils/mirror';
+
+/** One line that says where the second copy stands. Never a percentage. */
+function mirrorLine(status: MirrorStatus, t: (key: string, r?: Record<string, string | number>) => string): string {
+  switch (status.kind) {
+    case 'pending': return t('mirror_pending');
+    case 'offline': return t('mirror_offline');
+    case 'tooLarge': return t('mirror_too_large');
+    case 'failed': return t('mirror_failed', { error: status.error });
+    case 'saved': {
+      const d = new Date(status.at);
+      const when = Number.isNaN(d.getTime()) ? '—' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return t('mirror_saved', { time: when });
+    }
+  }
+}
 
 interface SettingsPanelProps {
   viewMode: string;
   langPreference: 'auto' | 'en' | 'fr' | 'es';
   setLangPreference: (val: 'auto' | 'en' | 'fr' | 'es') => void;
-  lockEnabled: boolean;
-  handleToggleLock: (val: boolean) => void;
-  lockType: 'password' | '2fa';
-  setLockType: (val: 'password' | '2fa') => void;
-  setIsSettingUp2FA: (val: boolean) => void;
-  storedPassword: string;
-  handleSavePassword: (val: string) => void;
+  mirrorStatus: MirrorStatus;
   handleLoadDemoData: () => void;
   handlePurgeAllData: () => void;
   customCategories: CustomCategory[];
@@ -37,13 +47,7 @@ export function SettingsPanel({
   viewMode,
   langPreference,
   setLangPreference,
-  lockEnabled,
-  handleToggleLock,
-  lockType,
-  setLockType,
-  setIsSettingUp2FA,
-  storedPassword,
-  handleSavePassword,
+  mirrorStatus,
   handleLoadDemoData,
   handlePurgeAllData,
   customCategories,
@@ -105,57 +109,11 @@ export function SettingsPanel({
         t={t}
       />
 
-      {/* Security Gate settings */}
+      {/* Second copy held by the host (doc 73) */}
       <div style={styles.settingsSection}>
-        <h3 style={styles.settingsSectionTitle}>{t('settings_security')}</h3>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <input 
-            type="checkbox" 
-            id="security-toggle"
-            checked={lockEnabled}
-            onChange={(e) => handleToggleLock(e.target.checked)}
-            style={{ cursor: 'pointer' }}
-          />
-          <label htmlFor="security-toggle" style={{ fontSize: '13px', cursor: 'pointer' }}>
-            {t('settings_lock_enabled')}
-          </label>
-        </div>
-
-        {lockEnabled && (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>{t('settings_lock_type')}</label>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-              <button 
-                onClick={() => { setLockType('password'); localStorage.setItem('crm_lock_type', 'password'); }}
-                style={lockType === 'password' ? styles.toggleBtnActive : styles.toggleBtn}
-              >
-                🔑 {t('settings_password')}
-              </button>
-              <button 
-                onClick={() => { setIsSettingUp2FA(true); }}
-                style={lockType === '2fa' ? styles.toggleBtnActive : styles.toggleBtn}
-              >
-                📱 {t('settings_2fa')}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {lockEnabled && lockType === 'password' && (
-          <div style={{ ...styles.formGroup, marginTop: '16px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
-            <label style={styles.label}>{t('settings_set_password')}</label>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-              <input 
-                type="text" 
-                defaultValue={storedPassword}
-                onBlur={(e) => handleSavePassword(e.target.value)}
-                style={styles.input}
-                placeholder="1234"
-              />
-            </div>
-          </div>
-        )}
+        <h3 style={styles.settingsSectionTitle}>{t('settings_backup')}</h3>
+        <p style={{ fontSize: '13px', margin: '0 0 8px 0' }}>{mirrorLine(mirrorStatus, t)}</p>
+        <p style={{ fontSize: '12px', margin: 0, color: 'var(--text-muted)' }}>{t('mirror_explain')}</p>
       </div>
 
       {/* Avatar Style choice */}

@@ -69,6 +69,10 @@ export interface ContactTask {
   text: string;
   completed: boolean;
   dueDate?: string;
+  /** Follow-up time, local wall clock `YYYY-MM-DDTHH:mm`. */
+  dueAt?: string;
+  /** When it was filed into the host calendar. Absent = never filed. */
+  agendaFiledAt?: string;
 }
 
 export interface Debt {

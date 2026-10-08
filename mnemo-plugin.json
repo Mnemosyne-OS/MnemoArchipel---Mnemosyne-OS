@@ -1,9 +1,18 @@
 {
   "name": "@mnemosyne-plugins/mnemo-archipel",
   "displayName": "L'Archipel CRM",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "category": "Productivity",
   "icon": "icon.svg",
+  "keywords": [
+    "crm",
+    "relationships",
+    "contacts",
+    "friends",
+    "adhd",
+    "relations",
+    "amis"
+  ],
   "description": "Un CRM personnel organique et sobre conçu pour le TDAH, luttant contre l'oubli des relations par la résonance cognitive.",
   "descriptionI18n": {
     "fr": "Un CRM personnel organique et sobre conçu pour le TDAH, luttant contre l'oubli des relations par la résonance cognitive.",
@@ -14,7 +23,8 @@
   "permissions": [
     "vault:read",
     "vault:write",
-    "model:infer"
+    "model:infer",
+    "agenda:write"
   ],
   "updateStrategy": "git",
   "entrypoints": {
@@ -29,5 +39,6 @@
       "defaultHeight": 750,
       "icon": "🏝️"
     }
-  ]
+  ],
+  "_permissions": "vault:read and vault:write keep each contact in this app's own sandbox vault. model:infer reads a brain dump to extract facts. agenda:write puts a follow-up you chose into the Mnemosyne Agenda, on a press, so it rings with this window closed; it cannot read, move or delete an appointment."
 }

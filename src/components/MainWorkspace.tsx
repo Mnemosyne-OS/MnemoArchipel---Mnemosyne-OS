@@ -1,6 +1,7 @@
 import React from 'react';
 import { Contact, CustomCategory, CustomWidgetDef, UserProfile } from '../types';
 import { styles } from '../styles';
+import type { MirrorStatus } from '../utils/mirror';
 import { getCategoryColor } from '../utils/colors';
 
 // View Imports
@@ -39,13 +40,7 @@ interface MainWorkspaceProps {
   checkGithubUpdates: () => void;
   handleLoadDemoData: () => void;
   handlePurgeAllData: () => void;
-  handleToggleLock: (l: boolean) => void;
-  lockEnabled: boolean;
-  lockType: 'password' | '2fa';
-  setLockType: (t: 'password' | '2fa') => void;
-  setIsSettingUp2FA: (s: boolean) => void;
-  storedPassword: string;
-  handleSavePassword: (p: string) => void;
+  mirrorStatus: MirrorStatus;
   handleCreateCategory: (l: string, c: string) => void;
   handleDeleteCategory: (k: string) => void;
   onExportDatabase: () => void;
@@ -88,13 +83,7 @@ export const MainWorkspace: React.FC<MainWorkspaceProps> = ({
   checkGithubUpdates,
   handleLoadDemoData,
   handlePurgeAllData,
-  handleToggleLock,
-  lockEnabled,
-  lockType,
-  setLockType,
-  setIsSettingUp2FA,
-  storedPassword,
-  handleSavePassword,
+  mirrorStatus,
   handleCreateCategory,
   handleDeleteCategory,
   onExportDatabase,
@@ -217,13 +206,7 @@ export const MainWorkspace: React.FC<MainWorkspaceProps> = ({
           viewMode={viewMode}
           langPreference={langPreference as any}
           setLangPreference={setLangPreference}
-          lockEnabled={lockEnabled}
-          handleToggleLock={handleToggleLock}
-          lockType={lockType}
-          setLockType={setLockType}
-          setIsSettingUp2FA={setIsSettingUp2FA}
-          storedPassword={storedPassword}
-          handleSavePassword={handleSavePassword}
+          mirrorStatus={mirrorStatus}
           handleLoadDemoData={handleLoadDemoData}
           handlePurgeAllData={handlePurgeAllData}
           customCategories={customCategories}

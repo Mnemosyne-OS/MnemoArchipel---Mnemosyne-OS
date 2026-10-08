@@ -8,8 +8,6 @@ import { DetailsSidebar } from './components/DetailsSidebar';
 import { ContactDashboard } from './components/ContactDashboard';
 import { AddContactModal } from './components/AddContactModal';
 import { AddFactModal } from './components/AddFactModal';
-import { Setup2FAModal } from './components/Setup2FAModal';
-import { SecurityGate } from './components/SecurityGate';
 import { AvatarStudio } from './components/AvatarStudio';
 import { Header } from './components/Header';
 import { ProfileModal } from './components/ProfileModal';
@@ -33,18 +31,14 @@ export default function App() {
     setViewMode,
     activeFilter,
     setActiveFilter,
-    isLocked,
-    setIsLocked,
-    lockEnabled,
-    lockType,
-    setLockType,
-    storedPassword,
+    contactsLoad,
+    mirrorStatus,
+    restoredAt,
+    dismissRestored,
     showAddModal,
     setShowAddModal,
     showFactModal,
     setShowFactModal,
-    isSettingUp2FA,
-    setIsSettingUp2FA,
     factTargetContact,
     setFactTargetContact,
     contextMenu,
@@ -79,8 +73,6 @@ export default function App() {
     handleSearch,
     handleLoadDemoData,
     handlePurgeAllData,
-    handleToggleLock,
-    handleSavePassword,
     confirmDialog,
     setConfirmDialog,
     globalAvatarStyle,
@@ -130,16 +122,6 @@ export default function App() {
     return getTranslation(activeLang, key, replacements);
   };
 
-  if (isLocked) {
-    return (
-      <SecurityGate 
-        lockType={lockType}
-        storedPassword={storedPassword}
-        onUnlock={() => setIsLocked(false)}
-        t={t}
-      />
-    );
-  }
 
   if (viewMode === 'avatar-builder') {
     return (
@@ -204,6 +186,19 @@ export default function App() {
         setShowNotifTray={setShowNotifTray}
       />
 
+      {/* A restore is SAID: repopulating a CRM in silence reads as magic. */}
+      {restoredAt && (
+        <div role="status" style={{ ...styles.successBox, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', margin: '8px 16px 0' }}>
+          <span>{t('mirror_restored', { count: contacts.length })}</span>
+          <button type="button" onClick={dismissRestored} style={styles.toggleBtn}>{t('btn_ok')}</button>
+        </div>
+      )}
+      {contactsLoad === 'unreadable' && (
+        <div role="alert" style={{ ...styles.successBox, backgroundColor: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.2)', color: 'var(--accent-rose)', margin: '8px 16px 0' }}>
+          {t('contacts_unreadable')}
+        </div>
+      )}
+
       {/* CORE WORKSPACE */}
       <div style={styles.mainLayout}>
         <div style={styles.canvasContainer}>
@@ -258,13 +253,7 @@ export default function App() {
               checkGithubUpdates={checkGithubUpdates}
               handleLoadDemoData={handleLoadDemoData}
               handlePurgeAllData={handlePurgeAllData}
-              handleToggleLock={handleToggleLock}
-              lockEnabled={lockEnabled}
-              lockType={lockType}
-              setLockType={setLockType}
-              setIsSettingUp2FA={setIsSettingUp2FA}
-              storedPassword={storedPassword}
-              handleSavePassword={handleSavePassword}
+              mirrorStatus={mirrorStatus}
               handleCreateCategory={handleCreateCategory}
               handleDeleteCategory={handleDeleteCategory}
               onExportDatabase={handleExportDatabase}
@@ -402,19 +391,6 @@ export default function App() {
         />
       )}
 
-      {isSettingUp2FA && (
-        <Setup2FAModal 
-          onClose={() => setIsSettingUp2FA(false)}
-          onSuccess={(secret) => {
-            localStorage.setItem('crm_lock_enabled', 'true');
-            localStorage.setItem('crm_2fa_secret', secret);
-            localStorage.setItem('crm_lock_type', '2fa');
-            handleToggleLock(true);
-            setLockType('2fa');
-          }}
-          t={t}
-        />
-      )}
 
       {confirmDialog && (
         <ConfirmModal

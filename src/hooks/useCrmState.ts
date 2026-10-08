@@ -5,8 +5,15 @@ import { getRandomAvatarConfig, generate50DemoContacts } from '../utils/helpers'
 import { useCrmSettings } from './useCrmSettings';
 import { calculateNotifications } from '../utils/notificationHelpers';
 import { exportDatabase, importDatabase, importDetectFormat } from '../utils/databaseHelpers';
+import {
+  CONTACTS_KEY, RESTORED_FLAG, bootDecision, localIsBlank, readContactsRaw, restoreLocal,
+  snapshotLocal, statusFromError, type MirrorSnapshot, type MirrorStatus,
+} from '../utils/mirror';
 
 const sdk = new MnemoCartridgeSDK('@mnemosyne-plugins/mnemo-archipel');
+
+/** Coalesces a burst of edits (typing a fact) into one host write. */
+const MIRROR_DEBOUNCE_MS = 1200;
 
 /**
  * Main custom hook managing CRM core entities state (contacts, search, details).
@@ -22,16 +29,25 @@ export function useCrmState() {
   const [viewMode, setViewMode] = useState<'archipelago' | 'archipelago3d' | 'list' | 'settings' | 'timeline' | 'avatar-builder' | 'contact-dashboard' | 'dashboard'>('dashboard');
   const [activeFilter, setActiveFilter] = useState('All');
   
-  // Security
-  const [isLocked, setIsLocked] = useState(() => localStorage.getItem('crm_lock_enabled') === 'true');
-  const [lockEnabled, setLockEnabled] = useState(() => localStorage.getItem('crm_lock_enabled') === 'true');
-  const [lockType, setLockType] = useState<'password' | '2fa'>(() => (localStorage.getItem('crm_lock_type') as any) || 'password');
-  const [storedPassword, setStoredPassword] = useState(() => localStorage.getItem('crm_password') || '1234');
-  
+  // Contacts read at boot: three states, never two (doc 124 §7).
+  const [contactsLoad, setContactsLoad] = useState<'reading' | 'ok' | 'unreadable'>('reading');
+  // The second copy held by the host (doc 73).
+  const [mirrorStatus, setMirrorStatus] = useState<MirrorStatus>({ kind: 'pending' });
+  const [mirrorReady, setMirrorReady] = useState(false);
+  const [restoredAt, setRestoredAt] = useState<string | null>(() => {
+    try {
+      const at = localStorage.getItem(RESTORED_FLAG);
+      if (at) localStorage.removeItem(RESTORED_FLAG);
+      return at;
+    } catch (err) {
+      console.warn('[MIRROR] could not read the restore flag:', err);
+      return null;
+    }
+  });
+
   // Modals Visibility
   const [showAddModal, setShowAddModal] = useState(false);
   const [showFactModal, setShowFactModal] = useState(false);
-  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
   const [factTargetContact, setFactTargetContact] = useState<Contact | null>(null);
   
   // Context Menus & Links
@@ -58,8 +74,49 @@ export function useCrmState() {
   const [vaultId, setVaultId] = useState<string>('archipel');
 
   useEffect(() => {
-    sdk.status().then(() => setIsHostOnline(true)).catch(() => setIsHostOnline(false));
+    sdk.status().then(() => setIsHostOnline(true)).catch(() => {
+      setIsHostOnline(false);
+      setMirrorStatus({ kind: 'offline' });
+    });
   }, []);
+
+  // The lock was removed (doc 124 §3.2): it stored its password in clear and
+  // protected nothing. Its leftovers are cleared so no secret stays behind.
+  useEffect(() => {
+    for (const key of ['crm_lock_enabled', 'crm_lock_type', 'crm_password', 'crm_2fa_secret']) {
+      try { localStorage.removeItem(key); }
+      catch (err) { console.warn(`[LOCK] could not clear ${key}:`, err); }
+    }
+  }, []);
+
+  // Mirror, boot half. 🚨 Read the host copy BEFORE anything writes it:
+  // a cartridge booting on a new, empty origin would otherwise overwrite a
+  // full mirror with an empty list. Until this answers, nothing is mirrored.
+  useEffect(() => {
+    if (!isHostOnline) return;
+    let alive = true;
+    sdk.invoke<{ state: { snapshot?: MirrorSnapshot } | null }>('state.get')
+      .then(res => {
+        if (!alive) return;
+        const snap = res?.state?.snapshot;
+        if (bootDecision(localIsBlank(), snap) === 'restore' && snap && restoreLocal(snap).includes(CONTACTS_KEY)) {
+          try { localStorage.setItem(RESTORED_FLAG, new Date().toISOString()); }
+          catch (err) { console.warn('[MIRROR] could not set the restore flag:', err); }
+          // Every hook reads its keys at mount: reload instead of patching
+          // half the surfaces with stale state.
+          window.location.reload();
+          return;
+        }
+        setMirrorReady(true);
+      })
+      .catch(err => {
+        // Unknown is not empty: without an answer, writing would risk
+        // replacing a good mirror. The screen says the copy failed.
+        console.error('[MIRROR] read failed:', err);
+        if (alive) setMirrorStatus(statusFromError(err));
+      });
+    return () => { alive = false; };
+  }, [isHostOnline]);
 
   useEffect(() => {
     if (isHostOnline) {
@@ -86,13 +143,27 @@ export function useCrmState() {
   }, [isHostOnline]); 
 
   useEffect(() => {
-    const savedContacts = localStorage.getItem('archipel_contacts');
-    if (savedContacts) {
-      setContacts(JSON.parse(savedContacts));
-    } else {
-      setContacts([]);
-      localStorage.setItem('archipel_contacts', JSON.stringify([]));
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(CONTACTS_KEY); }
+    catch (err) { console.error('[CONTACTS] storage unreadable:', err); setContactsLoad('unreadable'); return; }
+    const read = readContactsRaw(raw);
+    if (read.kind === 'unreadable') {
+      // Kept aside before anything can overwrite it: the next save would
+      // replace the only copy of a list someone may still recover.
+      // Once it is aside, the key is cleared so the host mirror, if it holds
+      // a readable list, restores it on this same boot.
+      try {
+        localStorage.setItem(`${CONTACTS_KEY}_unreadable_${Date.now()}`, raw ?? '');
+        localStorage.removeItem(CONTACTS_KEY);
+        console.error('[CONTACTS] the stored list is not readable JSON; it was set aside');
+      } catch (err) {
+        console.error('[CONTACTS] could not set the unreadable list aside:', err);
+      }
+      setContactsLoad('unreadable');
+      return;
     }
+    setContacts(read.kind === 'list' ? JSON.parse(raw as string) : []);
+    setContactsLoad('ok');
   }, []);
 
   // Close the context menu on an outside click, or when this cartridge
@@ -115,7 +186,7 @@ export function useCrmState() {
 
   const persistContacts = (updated: Contact[]) => {
     setContacts(updated);
-    localStorage.setItem('archipel_contacts', JSON.stringify(updated));
+    localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated));
   };
 
   // ── Mnemosyne anchoring — sync contacts into the app's sandbox vault ──────
@@ -176,6 +247,32 @@ export function useCrmState() {
     void syncContactsToVault(contacts, vaultId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHostOnline, vaultId, contacts]);
+
+  // Mirror, write half. Runs only once the boot half has read the host copy,
+  // then after every change, debounced. The snapshot is read from
+  // localStorage, which every setter writes synchronously before rendering.
+  useEffect(() => {
+    if (!mirrorReady) return;
+    const timer = setTimeout(() => {
+      sdk.invoke<{ updatedAt?: string }>('state.set', { state: { snapshot: snapshotLocal() } })
+        .then(res => setMirrorStatus({ kind: 'saved', at: res?.updatedAt ?? new Date().toISOString() }))
+        .catch(err => {
+          console.error('[MIRROR] write failed:', err);
+          setMirrorStatus(statusFromError(err));
+        });
+    }, MIRROR_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [
+    mirrorReady,
+    contacts,
+    settings.userProfile,
+    settings.notificationSettings,
+    settings.customCategories,
+    settings.customWidgetDefs,
+    settings.theme,
+    settings.globalAvatarStyle,
+    settings.langPreference,
+  ]);
 
   // CRUD handlers
   const handleAddContact = (
@@ -490,19 +587,19 @@ Reply in STRICT JSON: { "name": "Firstname", "facts": ["fact 1", "fact 2"], "moo
         persistContacts([]);
         setSelectedContact(null);
         setConfirmDialog(null);
+        // 🚨 Written NOW, not after the debounce: a window closed within a
+        // second of the purge would leave a full mirror behind, and the next
+        // boot on a blank origin would bring every purged contact back.
+        if (mirrorReady) {
+          sdk.invoke<{ updatedAt?: string }>('state.set', { state: { snapshot: snapshotLocal() } })
+            .then(res => setMirrorStatus({ kind: 'saved', at: res?.updatedAt ?? new Date().toISOString() }))
+            .catch(err => {
+              console.error('[MIRROR] purge write failed:', err);
+              setMirrorStatus(statusFromError(err));
+            });
+        }
       }
     });
-  };
-
-  const handleToggleLock = (enabled: boolean) => {
-    localStorage.setItem('crm_lock_enabled', String(enabled));
-    setLockEnabled(enabled);
-    if (!enabled) setIsLocked(false);
-  };
-
-  const handleSavePassword = (newPass: string) => {
-    localStorage.setItem('crm_password', newPass);
-    setStoredPassword(newPass);
   };
 
   const handleUpdateContact = (updatedContact: Contact) => {
@@ -555,18 +652,14 @@ Reply in STRICT JSON: { "name": "Firstname", "facts": ["fact 1", "fact 2"], "moo
     setViewMode,
     activeFilter,
     setActiveFilter,
-    isLocked,
-    setIsLocked,
-    lockEnabled,
-    lockType,
-    setLockType,
-    storedPassword,
+    contactsLoad,
+    mirrorStatus,
+    restoredAt,
+    dismissRestored: () => setRestoredAt(null),
     showAddModal,
     setShowAddModal,
     showFactModal,
     setShowFactModal,
-    isSettingUp2FA,
-    setIsSettingUp2FA,
     factTargetContact,
     setFactTargetContact,
     contextMenu,
@@ -599,8 +692,6 @@ Reply in STRICT JSON: { "name": "Firstname", "facts": ["fact 1", "fact 2"], "moo
     handleSearch,
     handleLoadDemoData,
     handlePurgeAllData,
-    handleToggleLock,
-    handleSavePassword,
     confirmDialog,
     setConfirmDialog,
     handleImportContacts,

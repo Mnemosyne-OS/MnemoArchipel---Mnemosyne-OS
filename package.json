@@ -1,6 +1,6 @@
 {
   "name": "@mnemosyne-plugins/mnemo-archipel",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,7 +21,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
-    "vitest": "^1.6.1"
+    "vitest": "^3.2.7"
   },
   "repository": {
     "type": "git",
