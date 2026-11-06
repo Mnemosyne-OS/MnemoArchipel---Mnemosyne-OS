@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { onHostConfig } from '@mnemosyne_os/cartridge-sdk';
+import { archipelTokens } from '../utils/hostTheme';
 import { CustomCategory, CustomWidgetDef, UserProfile, NotificationSettings } from '../types';
 
 /**
@@ -30,6 +32,34 @@ export function useCrmSettings() {
     setTheme(next);
     localStorage.setItem('crm_theme', next);
   };
+
+  // Follow the host shell. Its ground (dark | light) becomes the theme, NOT
+  // saved: `crm_theme` stays the person's own pick for outside the shell. The
+  // app's button still flips it until the host's next broadcast.
+  // `apply: false` because this hook owns data-theme (App sets it from
+  // `theme`): the SDK writing it too would make two writers.
+  const [hostConfig, setHostConfig] = useState<{ base: 'light' | 'dark'; tokens: Record<string, string> } | null>(null);
+  useEffect(() => onHostConfig(cfg => {
+    if (cfg.theme !== 'dark' && cfg.theme !== 'light') return;
+    setTheme(cfg.theme);
+    setHostConfig({ base: cfg.theme, tokens: cfg.tokens ?? {} });
+  }, { apply: false }), []);
+
+  // The host's colour tokens are drawn for ITS ground. Laid over this app's
+  // [data-theme="light"] rules while the host is dark, they would paint a
+  // broken light theme (inline beats the stylesheet), so they apply only
+  // while the two grounds agree, and are taken off when they do not.
+  // Translated first (utils/hostTheme): some host names mean something else here.
+  useEffect(() => {
+    if (!hostConfig) return;
+    const root = document.documentElement.style;
+    const tokens = archipelTokens(hostConfig.tokens);
+    if (hostConfig.base === theme) {
+      for (const [key, value] of Object.entries(tokens)) root.setProperty(key, value);
+    } else {
+      for (const key of Object.keys(tokens)) root.removeProperty(key);
+    }
+  }, [hostConfig, theme]);
 
   // Self User Profile
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {

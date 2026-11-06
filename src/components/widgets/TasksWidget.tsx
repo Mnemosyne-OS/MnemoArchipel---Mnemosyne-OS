@@ -6,6 +6,7 @@ import { MnemoCartridgeSDK } from '../../sdk/mnemo-sdk';
 import { DueAtPicker } from './DueAtPicker';
 import { AGENDA_DENIED, agendaErrorKey, followUpEvent } from '../../utils/agendaDoor';
 import { isPast } from '../../utils/dueAtPicker';
+import { withTask, withTaskToggled } from '../../utils/contactEdits';
 
 const sdk = new MnemoCartridgeSDK('@mnemosyne-plugins/mnemo-archipel');
 
@@ -54,8 +55,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({
       completed: false,
       ...(newDueAt ? { dueAt: newDueAt } : {}),
     };
-    const tasks = [...tasksList, newEntry];
-    handleUpdateContact({ ...selectedContact, tasks });
+    handleUpdateContact(withTask(selectedContact, newEntry));
     setNewTask('');
     setNewDueAt('');
     setPickerOpen(false);
@@ -93,8 +93,7 @@ export const TasksWidget: React.FC<TasksWidgetProps> = ({
     if (target && !target.completed) {
       playReward();
     }
-    const tasks = tasksList.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
-    handleUpdateContact({ ...selectedContact, tasks });
+    handleUpdateContact(withTaskToggled(selectedContact, taskId));
   };
 
   const removeTask = (taskId: string) => {

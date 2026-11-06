@@ -15,6 +15,8 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { ConfirmModal } from './components/ConfirmModal';
 import { CrmContextMenu } from './components/CrmContextMenu';
 import { MainWorkspace } from './components/MainWorkspace';
+import { ArchipelAgentActions } from './components/ArchipelAgentActions';
+import { BUILT_IN_RELATIONS } from './utils/agent';
 
 // Utilities
 import { getTranslation } from './utils/i18n';
@@ -123,8 +125,41 @@ export default function App() {
   };
 
 
+  // The agent door (doc 149): mounted in every branch below, so the avatar
+  // studio answers BUSY by name instead of NOT_OPEN.
+  const agent = (
+    <ArchipelAgentActions
+      contacts={contacts}
+      load={contactsLoad}
+      relationKeys={[...BUILT_IN_RELATIONS, ...customCategories.map((c) => c.key)]}
+      addContact={(c) => handleAddContact(c.name, c.relations, '👤', c.fact, undefined, c.email, c.phone, c.address)}
+      updateContact={handleUpdateContact}
+      recordContact={handleSimulateContact}
+      openContact={(c) => { setSelectedContact(c); setViewMode('contact-dashboard'); }}
+      editingAvatar={viewMode === 'avatar-builder'}
+      relationLabels={Object.fromEntries(customCategories.map((c) => [c.key, c.label]))}
+      view={{
+        mode: viewMode, filter: activeFilter, theme, avatarStyle: globalAvatarStyle, language: langPreference,
+        show: (m) => { setIsGraphFullscreen(false); setViewMode(m); },
+        setFilter: setActiveFilter,
+        closeAll: () => {
+          setShowAddModal(false); setShowFactModal(false); setFactTargetContact(null); setShowProfileModal(false);
+          setShowNotifTray(false); setConfirmDialog(null); setContextMenu({ ...contextMenu, visible: false }); setIsGraphFullscreen(false);
+          if (viewMode === 'contact-dashboard') setViewMode('archipelago');
+        },
+        showReminders: () => { setIsGraphFullscreen(false); setShowNotifTray(true); },
+        toggleTheme: handleToggleTheme,
+        toggleAvatarStyle: handleToggleAvatarStyle,
+        // As the settings' language select does: the choice and its saved copy.
+        setLanguage: (l) => { setLangPreference(l); localStorage.setItem('crm_language', l); },
+      }}
+    />
+  );
+
   if (viewMode === 'avatar-builder') {
     return (
+      <>
+      {agent}
       <AvatarStudio 
         contacts={contacts}
         initialContactId={selectedContact?.id}
@@ -135,12 +170,14 @@ export default function App() {
         onSaveUserAvatar={(cfg) => handleUpdateUserProfile({ ...userProfile, avatarConfig: cfg })}
         t={t}
       />
+      </>
     );
   }
 
   if (isGraphFullscreen && viewMode === 'archipelago3d' && contacts.length > 0) {
     return (
       <div style={{ width: '100vw', height: '100vh', backgroundColor: 'var(--bg-deep)', position: 'relative' }}>
+        {agent}
         <Archipelago3D 
           contacts={contacts}
           selectedContactId={selectedContact?.id}
@@ -167,6 +204,7 @@ export default function App() {
 
   return (
     <div style={styles.container}>
+      {agent}
       <Header
         theme={theme}
         handleToggleTheme={handleToggleTheme}

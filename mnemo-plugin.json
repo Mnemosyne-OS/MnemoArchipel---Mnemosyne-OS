@@ -1,7 +1,7 @@
 {
   "name": "@mnemosyne-plugins/mnemo-archipel",
   "displayName": "L'Archipel CRM",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "category": "Productivity",
   "icon": "icon.svg",
   "keywords": [
@@ -40,5 +40,303 @@
       "icon": "🏝️"
     }
   ],
-  "_permissions": "vault:read and vault:write keep each contact in this app's own sandbox vault. model:infer reads a brain dump to extract facts. agenda:write puts a follow-up you chose into the Mnemosyne Agenda, on a press, so it rings with this window closed; it cannot read, move or delete an appointment."
+  "_permissions": "vault:read and vault:write keep each contact in this app's own sandbox vault. model:infer reads a brain dump to extract facts. agenda:write puts a follow-up you chose into the Mnemosyne Agenda, on a press, so it rings with this window closed; it cannot read, move or delete an appointment.",
+  "agentActions": [
+    {
+      "id": "contacts",
+      "summary": "List or search the people in the Archipel: id, name, relations, warmth, last contact, email, phone, number of facts and open tasks.",
+      "details": "query matches every word in the name, relations, facts, email or phone, accents ignored. Sorted by name.",
+      "effect": "read",
+      "params": {
+        "query": {
+          "type": "string",
+          "description": "Words to look for; empty = everyone.",
+          "maxLength": 200
+        },
+        "limit": {
+          "type": "number",
+          "description": "How many (default 50).",
+          "minimum": 1,
+          "maximum": 500
+        }
+      }
+    },
+    {
+      "id": "contact",
+      "summary": "One person in full: facts, tasks, important dates and the latest mementos.",
+      "details": "mementos holds the 20 newest; mementosNotShown counts the rest.",
+      "effect": "read",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "contactId"
+      ]
+    },
+    {
+      "id": "openContact",
+      "summary": "Show one person's page on the person's screen.",
+      "effect": "write",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "contactId"
+      ]
+    },
+    {
+      "id": "addContact",
+      "summary": "Add a person to the Archipel, as the New contact form does, then show their page.",
+      "details": "relations: a key (Friend, Colleague, Family, Mentor, or one of the person's own categories) or the word said (« famille », « amis »); an unknown one is refused with the names (NO_RELATION).",
+      "effect": "write",
+      "params": {
+        "name": {
+          "type": "string",
+          "description": "Their name.",
+          "maxLength": 200
+        },
+        "relations": {
+          "type": "list",
+          "description": "Relations, by key or as said.",
+          "maxItems": 10
+        },
+        "fact": {
+          "type": "string",
+          "description": "A first fact about them.",
+          "maxLength": 1000
+        },
+        "email": {
+          "type": "string",
+          "description": "Email.",
+          "maxLength": 200
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone.",
+          "maxLength": 60
+        },
+        "address": {
+          "type": "string",
+          "description": "Postal address.",
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    {
+      "id": "addFact",
+      "summary": "Add a fact about a person (what they like, their job, their kids' names...), shown on their page.",
+      "effect": "write",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        },
+        "fact": {
+          "type": "string",
+          "description": "The fact.",
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "contactId",
+        "fact"
+      ]
+    },
+    {
+      "id": "recordContact",
+      "summary": "Record that the person was in touch with someone today, as the Record a contact button does: warmth goes up and a memento is kept.",
+      "effect": "write",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "contactId"
+      ]
+    },
+    {
+      "id": "addTask",
+      "summary": "Add a task about a person (call back, send the photos...) to their tasks.",
+      "details": "No reminder date: putting a reminder in the Agenda stays a gesture of the person, on the task.",
+      "effect": "write",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        },
+        "text": {
+          "type": "string",
+          "description": "The task.",
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "contactId",
+        "text"
+      ]
+    },
+    {
+      "id": "completeTask",
+      "summary": "Tick a person's task as done (or not done).",
+      "details": "Calling it twice does not flip it back.",
+      "effect": "write",
+      "params": {
+        "contactId": {
+          "type": "string",
+          "description": "The person by their id from contacts, or by their name as said (« Léa », « Léa Martin »).",
+          "maxLength": 200
+        },
+        "taskId": {
+          "type": "string",
+          "description": "The task id from contact, or its words (« rappeler », « les photos »).",
+          "maxLength": 40
+        },
+        "done": {
+          "type": "boolean",
+          "description": "true = done (default), false = not done."
+        }
+      },
+      "required": [
+        "contactId",
+        "taskId"
+      ]
+    },
+    {
+      "id": "showView",
+      "summary": "Show one of L'Archipel's screens, as the header buttons do: the dashboard, the 2D map of islands, the 3D map, the list, the timeline, or the settings.",
+      "effect": "write",
+      "params": {
+        "view": {
+          "type": "string",
+          "description": "The screen.",
+          "enum": [
+            "dashboard",
+            "archipelago",
+            "archipelago3d",
+            "list",
+            "timeline",
+            "settings"
+          ]
+        }
+      },
+      "required": [
+        "view"
+      ]
+    },
+    {
+      "id": "filterRelation",
+      "summary": "Show only one kind of relation (friends, family, colleagues, mentors or one of the person's own categories), as the filter chips do; « all » shows everyone again.",
+      "details": "The filter acts on the dashboard and the two maps; from another screen the 2D map is shown.",
+      "effect": "write",
+      "params": {
+        "relation": {
+          "type": "string",
+          "description": "A relation key or the word said (« famille », « amis »), or « all ».",
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "relation"
+      ]
+    },
+    {
+      "id": "closeView",
+      "summary": "Close what is open over the screen: a person's page, a form, the profile, the reminders, a menu.",
+      "effect": "write",
+      "params": {}
+    },
+    {
+      "id": "showReminders",
+      "summary": "Open the reminders (the bell): the people it is time to get back to.",
+      "effect": "write",
+      "params": {}
+    },
+    {
+      "id": "setDisplay",
+      "summary": "Change how L'Archipel looks: light or dark theme, human or magical avatars, the app's language.",
+      "effect": "write",
+      "params": {
+        "theme": {
+          "type": "string",
+          "description": "light or dark.",
+          "enum": [
+            "light",
+            "dark"
+          ]
+        },
+        "avatarStyle": {
+          "type": "string",
+          "description": "human or magical.",
+          "enum": [
+            "human",
+            "magical"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "auto (the system's), en, fr or es.",
+          "enum": [
+            "auto",
+            "en",
+            "fr",
+            "es"
+          ]
+        }
+      }
+    }
+  ],
+  "agentGuide": [
+    "Name a person the way the person says it (« Léa », « Léa Martin »), a task by its words (« rappeler »), a relation by its word (« famille »): L'Archipel finds them. Several matches are refused with their names (AMBIGUOUS): pick one and call again.",
+    "To look at something: openContact for a person's page, showView for a screen, filterRelation to keep one kind of relation, showReminders for who to get back to, closeView to close.",
+    "« I called Léa » / « j'ai vu Léa » is recordContact. Something learned about someone is addFact; something to do for them is addTask; done is completeTask.",
+    "Nothing is deleted from here, and the brain dump and the memory search stay the person's own buttons."
+  ],
+  "voiceCommands": {
+    "fr": [
+      "montre la fiche de Léa",
+      "j'ai appelé Léa aujourd'hui",
+      "note que Léa adore le jazz",
+      "ajoute une tâche pour Léa : lui envoyer les photos",
+      "coche la tâche rappeler de Léa",
+      "montre seulement la famille",
+      "affiche la carte en 3D",
+      "montre mes rappels"
+    ],
+    "en": [
+      "show Léa's page",
+      "I called Léa today",
+      "note that Léa loves jazz",
+      "add a task for Léa: send her the photos",
+      "tick Léa's call back task",
+      "show only family",
+      "show the 3D map",
+      "show my reminders"
+    ],
+    "es": [
+      "muestra la ficha de Léa",
+      "he llamado a Léa hoy",
+      "anota que a Léa le encanta el jazz",
+      "añade una tarea para Léa: enviarle las fotos",
+      "marca la tarea llamar de Léa",
+      "muestra solo la familia",
+      "muestra el mapa en 3D",
+      "muestra mis recordatorios"
+    ]
+  }
 }

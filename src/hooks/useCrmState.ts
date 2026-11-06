@@ -4,6 +4,7 @@ import { MnemoCartridgeSDK } from '../sdk/mnemo-sdk';
 import { getRandomAvatarConfig, generate50DemoContacts } from '../utils/helpers';
 import { useCrmSettings } from './useCrmSettings';
 import { calculateNotifications } from '../utils/notificationHelpers';
+import { withFact } from '../utils/contactEdits';
 import { exportDatabase, importDatabase, importDetectFormat } from '../utils/databaseHelpers';
 import {
   CONTACTS_KEY, RESTORED_FLAG, bootDecision, localIsBlank, readContactsRaw, restoreLocal,
@@ -315,6 +316,8 @@ export function useCrmState() {
     const updated = [newC, ...contacts];
     persistContacts(updated);
     setSelectedContact(newC);
+    // The id, for the agent door (doc 149): the form ignores it.
+    return newC.id;
   };
 
   const handleDeleteContact = (contactId: string) => {
@@ -345,7 +348,12 @@ export function useCrmState() {
       if (c.id === contactId) {
         const warmth = Math.min(100, c.warmth + 15);
         const status = warmth > 70 ? 'active' : warmth > 35 ? 'warm' : 'dormant';
-        const mementos = [{ date: today, note: `Rencontre ou contact enregistré.` }, ...c.mementos];
+        const note = settings.activeLang === 'fr'
+          ? 'Rencontre ou contact enregistré.'
+          : settings.activeLang === 'es'
+            ? 'Encuentro o contacto registrado.'
+            : 'Meeting or contact recorded.';
+        const mementos = [{ date: today, note }, ...c.mementos];
         const newContact: Contact = { ...c, warmth, status, mementos, lastContact: today };
         if (selectedContact?.id === contactId) {
           setSelectedContact(newContact);
@@ -361,9 +369,7 @@ export function useCrmState() {
     if (!factTargetContact || !fact.trim()) return;
     const updated = contacts.map(c => {
       if (c.id === factTargetContact.id) {
-        const facts = [...c.facts];
-        if (!facts.includes(fact)) facts.push(fact);
-        const newContact = { ...c, facts };
+        const newContact = withFact(c, fact);
         if (selectedContact?.id === c.id) {
           setSelectedContact(newContact);
         }
